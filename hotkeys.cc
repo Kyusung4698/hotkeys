@@ -59,7 +59,10 @@ std::string _getKeyName(unsigned int virtualKey) {
 }
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
-  if (nCode < 0 || nCode != HC_ACTION) { // do not process message
+  char win_title[255];
+  GetWindowText(GetForegroundWindow(), win_title, sizeof(win_title));
+  std::string wTitle(win_title);
+  if (wTitle != "Path of Exile" || nCode < 0 || nCode != HC_ACTION) { // do not process message
     return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
   }
 
