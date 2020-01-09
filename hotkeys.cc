@@ -62,6 +62,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode < 0 || nCode != HC_ACTION) { // do not process message
     return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
   }
+
   KBDLLHOOKSTRUCT *p = (KBDLLHOOKSTRUCT *)lParam;
   switch (wParam) {
     case WM_KEYDOWN: {
@@ -126,11 +127,13 @@ void _clearHook(const Nan::FunctionCallbackInfo<Value> &info) {
 
 void Init(Local<Object> exports) {
   Local<Context> context = exports->CreationContext();
-  exports->Set(Nan::New("addHook").ToLocalChecked(),
+  exports->Set(context,
+               Nan::New("addHook").ToLocalChecked(),
                Nan::New<FunctionTemplate>(_addHook)
                    ->GetFunction(context)
                    .ToLocalChecked());
-  exports->Set(Nan::New("clearHook").ToLocalChecked(),
+  exports->Set(context,
+               Nan::New("clearHook").ToLocalChecked(),
                Nan::New<FunctionTemplate>(_clearHook)
                    ->GetFunction(context)
                    .ToLocalChecked());
