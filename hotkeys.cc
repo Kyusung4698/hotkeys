@@ -15,6 +15,7 @@ using v8::Function;
 using v8::FunctionTemplate;
 
 HHOOK g_hKeyboardHook;
+HHOOK g_hMouseHook;
 Nan::Callback *g_fKeyboardCallback;
 
 std::unordered_map<size_t, bool> g_dModifiers;
@@ -58,11 +59,14 @@ std::string _getKeyName(unsigned int virtualKey) {
     return "";
 }
 
-LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+bool _isPoEActive() {
   char win_title[255];
   GetWindowText(GetForegroundWindow(), win_title, sizeof(win_title));
-  std::string wTitle(win_title);
-  if (wTitle != "Path of Exile" || nCode < 0 || nCode != HC_ACTION) { // do not process message
+  return (std::string(win_title) == "Path of Exile");
+}
+
+LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+  if (!_isPoEActive() || nCode < 0 || nCode != HC_ACTION) { // do not process message
     return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
   }
 
@@ -112,6 +116,31 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
   return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
 }
 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+  if (!_isPoEActive() || nCode < 0 || nCode != HC_ACTION) { // do not process message
+    return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
+  }
+
+  if(wParam == WM_MOUSEWHEEL) {
+    std::string mwheel = "";
+
+    MSLLHOOKSTRUCT *p = (MSLLHOOKSTRUCT *)lParam;
+    int zDelta = GET_WHEEL_DELTA_WPARAM(p->mouseData);
+    if (zDelta == 120) {
+      mwheel = "MWHEELUP";
+    }
+    else if (zDelta == -120) {
+      mwheel = "MWHEELDOWN";
+    }
+    else {
+      return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
+    }
+    _buildAndSendCallback(mwheel);
+  }
+
+  return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
+}
+
 void _addHook(const Nan::FunctionCallbackInfo<Value> &info) {
   g_fKeyboardCallback = new Nan::Callback(info[0].As<Function>());
 
@@ -120,6 +149,7 @@ void _addHook(const Nan::FunctionCallbackInfo<Value> &info) {
   g_dModifiers[VK_MENU] = false;
 
   g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
+  g_hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandle(NULL), 0);
   info.GetReturnValue().Set(Nan::New("true").ToLocalChecked());
 }
 

@@ -13,7 +13,8 @@ function inputEventHandler(keyInfo) {
     const input = JSON.parse(keyInfo);
     const hotkeys = Object.getOwnPropertyNames(shortcuts);
 
-    hotkeys.some((item, index) => {
+    hotkeys.some((hotkey, index) => {
+        const item = shortcuts[hotkey];
         if (isEquivalent(item.check, input)) {
             item.callback();
             return true;
