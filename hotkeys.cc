@@ -24,8 +24,8 @@ void _buildAndSendCallback(std::string key) {
   ss << "{ "
         << "\"Modifiers\": {"
           << "\"Control\": " << (g_dModifiers[VK_CONTROL] ? "true" : "false") << ", "
-          << "\"Control\": " << (g_dModifiers[VK_SHIFT] ? "true" : "false") << ", "
-          << "\"Control\": " << (g_dModifiers[VK_MENU] ? "true" : "false")
+          << "\"Shift\": " << (g_dModifiers[VK_SHIFT] ? "true" : "false") << ", "
+          << "\"Alt\": " << (g_dModifiers[VK_MENU] ? "true" : "false")
         << "}, "
         << "\"Key\": \"" << key << "\""
       << "}";

@@ -3,27 +3,27 @@ var hotkeys = require("./build/Release/hotkeys.node");
 // module.exports = hotkeys;
 var shortcuts = [];
 
-export function beginListener() {
-    hotkeys.addHook(inputEventHandler);
+module.exports.beginListener = () => {
+    hotkeys.addHook((keyInfo) => {
+        inputEventHandler(keyInfo);
+    });
 }
 
 function inputEventHandler(keyInfo) {
     let found = false;
     const input = JSON.parse(keyInfo);
     shortcuts.some((item, index) => {
-        if (!found && this.isEquivalent(item.check, input)) {
+        if (!found && isEquivalent(item.check, input)) {
             item.callback();
             return true;
         }
         return false;
     });
 }
-
-export function removeListener() {
+module.exports.removeListener = () => {
     hotkeys.clearHook();
 }
-
-export function register(shortcut, callback) {
+module.exports.register = (shortcut, callback) => {
     const formattedShortcut = {
         check: {
             Key: '',
@@ -54,10 +54,10 @@ export function register(shortcut, callback) {
                 break;
         }
     });
-    this.shortcuts.push(formattedShortcut);
+    shortcuts.push(formattedShortcut);
 }
 
-isEquivalent(a, b) {
+function isEquivalent(a, b) {
     const aProps = Object.getOwnPropertyNames(a);
     const bProps = Object.getOwnPropertyNames(b);
 
@@ -69,7 +69,7 @@ isEquivalent(a, b) {
         const propName = aProps[i];
 
         if (typeof a[propName] === 'object') {
-            if (!this.isEquivalent(a[propName], b[propName])) {
+            if (!isEquivalent(a[propName], b[propName])) {
               return false;
             }
         } else {
