@@ -1,7 +1,7 @@
 var hotkeys = require("./build/Release/hotkeys.node");
 
 // module.exports = hotkeys;
-var shortcuts = [];
+var shortcuts = {};
 
 module.exports.beginListener = () => {
     hotkeys.addHook((keyInfo) => {
@@ -10,19 +10,22 @@ module.exports.beginListener = () => {
 }
 
 function inputEventHandler(keyInfo) {
-    let found = false;
     const input = JSON.parse(keyInfo);
-    shortcuts.some((item, index) => {
-        if (!found && isEquivalent(item.check, input)) {
+    const hotkeys = Object.getOwnPropertyNames(shortcuts);
+
+    hotkeys.some((item, index) => {
+        if (isEquivalent(item.check, input)) {
             item.callback();
             return true;
         }
         return false;
     });
 }
+
 module.exports.removeListener = () => {
     hotkeys.clearHook();
 }
+
 module.exports.register = (shortcut, callback) => {
     const formattedShortcut = {
         check: {
@@ -54,7 +57,15 @@ module.exports.register = (shortcut, callback) => {
                 break;
         }
     });
-    shortcuts.push(formattedShortcut);
+    shortcuts[shortcut] = formattedShortcut;
+}
+
+module.exports.unregister = (shortcut) => {
+    delete shortcuts[shortcut];
+}
+
+module.exports.unregisterall = (shortcut) => {
+    shortcuts = {};
 }
 
 function isEquivalent(a, b) {
