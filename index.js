@@ -13,7 +13,7 @@ function inputEventHandler(keyInfo) {
     const input = JSON.parse(keyInfo);
     const hotkeys = Object.getOwnPropertyNames(shortcuts);
 
-    hotkeys.some((hotkey, index) => {
+    hotkeys.some(hotkey => {
         const item = shortcuts[hotkey];
         if (isEquivalent(item.check, input)) {
             item.callback();
@@ -39,18 +39,18 @@ module.exports.register = (shortcut, callback) => {
         },
         callback: callback
     };
-    const checkShortcut = shortcut.replace(/\s/g, '').toUpperCase().split('+');
+    const checkShortcut = shortcut.replace(/\s/g, '').toLowerCase().split('+');
 
     checkShortcut.forEach((item, index) => {
         switch (item) {
-            case 'CTRL':
-            case 'CMDORCTRL':
+            case 'ctrl':
+            case 'cmdorctrl':
                 formattedShortcut.check.Modifiers.Control = true;
                 break;
-            case 'SHIFT':
+            case 'shift':
                 formattedShortcut.check.Modifiers.Shift = true;
                 break;
-            case 'ALT':
+            case 'alt':
                 formattedShortcut.check.Modifiers.Alt = true;
                 break;
             default:
