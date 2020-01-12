@@ -3,10 +3,10 @@ var hotkeys = require("./build/Release/hotkeys.node");
 // module.exports = hotkeys;
 var shortcuts = {};
 
-module.exports.beginListener = () => {
-    hotkeys.addHook((keyInfo) => {
+module.exports.beginListener = (checkWindow) => {
+    hotkeys.addHook(keyInfo => {
         inputEventHandler(keyInfo);
-    });
+    }, checkWindow);
 }
 
 function inputEventHandler(keyInfo) {
