@@ -27,9 +27,9 @@ void _buildAndSendCallback(std::string key)
   std::stringstream ss;
   ss << "{ "
      << "\"Modifiers\": {"
-      << "\"Control\": " << (g_dModifiers[VK_CONTROL] ? "true" : "false") << ", "
-      << "\"Shift\": " << (g_dModifiers[VK_SHIFT] ? "true" : "false") << ", "
-      << "\"Alt\": " << (g_dModifiers[VK_MENU] ? "true" : "false")
+     << "\"Control\": " << (g_dModifiers[VK_CONTROL] ? "true" : "false") << ", "
+     << "\"Shift\": " << (g_dModifiers[VK_SHIFT] ? "true" : "false") << ", "
+     << "\"Alt\": " << (g_dModifiers[VK_MENU] ? "true" : "false")
      << "}, "
      << "\"Key\": \"" << key << "\""
      << "}";
@@ -67,7 +67,7 @@ std::string _getKeyName(unsigned int virtualKey)
     return "a";
   case 66:
     return "b";
-  // case 67:	return "c"; disable ctrl + c
+    // case 67:	return "c"; disable ctrl + c
   case 68:
     return "d";
   case 69:
@@ -104,7 +104,7 @@ std::string _getKeyName(unsigned int virtualKey)
     return "t";
   case 85:
     return "u";
-  // case 86:	return "v"; disable ctrl + v
+    // case 86:	return "v"; disable ctrl + v
   case 87:
     return "w";
   case 88:
@@ -193,14 +193,20 @@ bool _isPoEActive()
     return true;
   }
 
+  HWND hWnd = GetForegroundWindow();
+  if (hWnd == NULL)
+  {
+    return false;
+  }
+
   char win_title[255];
-  GetWindowText(GetForegroundWindow(), win_title, sizeof(win_title));
+  GetWindowText(hWnd, win_title, sizeof(win_title));
   return (std::string(win_title) == "Path of Exile");
 }
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-  if (!_isPoEActive() || nCode < 0 || nCode != HC_ACTION)
+  if (nCode < 0 || nCode != HC_ACTION)
   { // do not process message
     return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
   }
@@ -229,11 +235,13 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
       g_dModifiers[VK_MENU] = true;
       break;
     default:
-
-      std::string key = _getKeyName(p->vkCode);
-      if (key != "")
+      if (_isPoEActive())
       {
-        _buildAndSendCallback(key);
+        std::string key = _getKeyName(p->vkCode);
+        if (key != "")
+        {
+          _buildAndSendCallback(key);
+        }
       }
     }
     break;
