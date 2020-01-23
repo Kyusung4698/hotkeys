@@ -2,10 +2,14 @@ var hotkeys = require("./build/Release/hotkeys.node");
 
 // module.exports = hotkeys;
 var shortcuts = {};
+var on;
+var active = false;
 
 module.exports.beginListener = (checkWindow) => {
     hotkeys.addHook(keyInfo => {
         inputEventHandler(keyInfo);
+    }, activeChange => {
+        activeChangeEventHandler(activeChange);
     }, checkWindow);
 }
 
@@ -23,8 +27,21 @@ function inputEventHandler(keyInfo) {
     });
 }
 
+function activeChangeEventHandler(event) {
+    const activeChange = JSON.parse(event);
+    active = activeChange.Active;
+    if (on) {
+        on(active);
+    }
+}
+
 module.exports.removeListener = () => {
     hotkeys.clearHook();
+}
+
+module.exports.on = (callback) => {
+    on = callback;
+    callback(active);
 }
 
 module.exports.register = (shortcut, callback) => {
@@ -82,7 +99,7 @@ function isEquivalent(a, b) {
 
         if (typeof a[propName] === 'object') {
             if (!isEquivalent(a[propName], b[propName])) {
-              return false;
+                return false;
             }
         } else {
             if (a[propName] !== b[propName]) {
