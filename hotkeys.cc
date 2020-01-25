@@ -2,8 +2,10 @@
 #include "windows.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "psapi.h"
 #include <string>
 #include <sstream>
+#include <iomanip>
 #include <unordered_map>
 
 using v8::Boolean;
@@ -23,6 +25,51 @@ Nan::Callback *g_fWindowActiveCallback;
 std::unordered_map<size_t, bool> g_dModifiers;
 bool g_bCheckWindow;
 bool g_bIsWindowActive;
+std::string g_strWindowProcessPath = std::string("");
+HWND g_hWnd;
+
+std::string escape_json(const std::string &s)
+{
+	std::ostringstream o;
+	for (auto c = s.cbegin(); c != s.cend(); c++)
+	{
+		switch (*c)
+		{
+		case '"':
+			o << "\\\"";
+			break;
+		case '\\':
+			o << "\\\\";
+			break;
+		case '\b':
+			o << "\\b";
+			break;
+		case '\f':
+			o << "\\f";
+			break;
+		case '\n':
+			o << "\\n";
+			break;
+		case '\r':
+			o << "\\r";
+			break;
+		case '\t':
+			o << "\\t";
+			break;
+		default:
+			if ('\x00' <= *c && *c <= '\x1f')
+			{
+				o << "\\u"
+				  << std::hex << std::setw(4) << std::setfill('0') << (int)*c;
+			}
+			else
+			{
+				o << *c;
+			}
+		}
+	}
+	return o.str();
+}
 
 void _buildAndSendKeyboardCallback(std::string key)
 {
@@ -45,7 +92,8 @@ void _buildAndSendWindowActiveCallback()
 {
 	std::stringstream ss;
 	ss << "{ "
-	   << "\"Active\":" << (g_bIsWindowActive ? "true" : "false")
+	   << "\"Active\": " << (g_bIsWindowActive ? "true" : "false") << ", "
+	   << "\"Path\": \"" << escape_json(g_strWindowProcessPath) << "\""
 	   << "}";
 
 	const unsigned argc = 1;
@@ -200,6 +248,13 @@ std::string _getKeyName(unsigned int virtualKey)
 	}
 }
 
+inline bool ends_with(std::string const &value, std::string const &ending)
+{
+	if (ending.size() > value.size())
+		return false;
+	return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 bool _isPoEActive()
 {
 	if (!g_bCheckWindow)
@@ -213,9 +268,45 @@ bool _isPoEActive()
 		return false;
 	}
 
+	if (hWnd == g_hWnd)
+	{
+		return true;
+	}
+
 	char win_title[255];
 	GetWindowText(hWnd, win_title, sizeof(win_title));
-	return (std::string(win_title) == "Path of Exile");
+	if (std::string(win_title) != "Path of Exile")
+	{
+		return false;
+	}
+
+	DWORD dwPID;
+	GetWindowThreadProcessId(hWnd, &dwPID);
+
+	std::string strName = std::string("");
+	HANDLE hHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwPID);
+	if (hHandle)
+	{
+		TCHAR buffer[MAX_PATH];
+		if (GetModuleFileNameEx(hHandle, 0, buffer, MAX_PATH))
+		{
+			strName = std::string(buffer);
+		}
+		CloseHandle(hHandle);
+	}
+
+	if (strName.empty())
+	{
+		return false;
+	}
+
+	if (ends_with(strName, "PathOfExile_x64Steam.exe") || ends_with(strName, "PathOfExileSteam.exe"))
+	{
+		g_hWnd = hWnd;
+		g_strWindowProcessPath = strName;
+		return true;
+	}
+	return false;
 }
 
 void _checkIsPoEActive()
@@ -353,7 +444,7 @@ void _addHook(const Nan::FunctionCallbackInfo<Value> &info)
 	g_hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandle(NULL), 0);
 
 	_checkIsPoEActive();
-	
+
 	info.GetReturnValue().Set(Nan::New("true").ToLocalChecked());
 }
 

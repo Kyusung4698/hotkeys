@@ -31,7 +31,7 @@ function activeChangeEventHandler(event) {
     const activeChange = JSON.parse(event);
     active = activeChange.Active;
     if (on) {
-        on(active);
+        on(active, activeChange.Path);
     }
 }
 
