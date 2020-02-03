@@ -300,7 +300,9 @@ bool _isPoEActive()
 		return false;
 	}
 
-	if (ends_with(strName, "PathOfExile_x64Steam.exe") || ends_with(strName, "PathOfExileSteam.exe") ||
+	if (
+		ends_with(strName, "PathOfExile_x64_KG.exe") || ends_with(strName, "PathOfExile_KG.exe") ||
+		ends_with(strName, "PathOfExile_x64Steam.exe") || ends_with(strName, "PathOfExileSteam.exe") ||
 		ends_with(strName, "PathOfExile_x64.exe") || ends_with(strName, "PathOfExile.exe"))
 	{
 		g_hWnd = hWnd;
